@@ -7,18 +7,21 @@ import tempfile
 import custom_speech_recognition as sr
 import io
 from datetime import timedelta
-import pyaudiowpatch as pyaudio
+# import pyaudiowpatch as pyaudio
+import pyaudio
 from heapq import merge
+import time
 
 PHRASE_TIMEOUT = 3.05
 
-MAX_PHRASES = 10
+MAX_PHRASES = 100
 
 class AudioTranscriber:
-    def __init__(self, mic_source, speaker_source, model):
-        self.transcript_data = {"You": [], "Speaker": []}
+    def __init__(self, mic_source, model):
+        self.transcript_data = {"You": []}
         self.transcript_changed_event = threading.Event()
         self.audio_model = model
+        self.audio = pyaudio.PyAudio()
         self.audio_sources = {
             "You": {
                 "sample_rate": mic_source.SAMPLE_RATE,
@@ -28,17 +31,9 @@ class AudioTranscriber:
                 "last_spoken": None,
                 "new_phrase": True,
                 "process_data_func": self.process_mic_data
-            },
-            "Speaker": {
-                "sample_rate": speaker_source.SAMPLE_RATE,
-                "sample_width": speaker_source.SAMPLE_WIDTH,
-                "channels": speaker_source.channels,
-                "last_sample": bytes(),
-                "last_spoken": None,
-                "new_phrase": True,
-                "process_data_func": self.process_speaker_data
             }
         }
+        self.log_file = open(str(time.time()) + ".log", "a")
 
     def transcribe_audio_queue(self, audio_queue):
         while True:
@@ -58,6 +53,9 @@ class AudioTranscriber:
                 os.unlink(path)
 
             if text != '' and text.lower() != 'you':
+                #append onto log file
+                self.log_file.write(f"{text}\n")
+                self.log_file.flush()
                 self.update_transcript(who_spoke, text, time_spoken)
                 self.transcript_changed_event.set()
 
@@ -93,23 +91,23 @@ class AudioTranscriber:
         if source_info["new_phrase"] or len(transcript) == 0:
             if len(transcript) > MAX_PHRASES:
                 transcript.pop(-1)
-            transcript.insert(0, (f"{who_spoke}: [{text}]\n\n", time_spoken))
+            transcript.insert(0, (f"{text}\n\n", time_spoken))
         else:
-            transcript[0] = (f"{who_spoke}: [{text}]\n\n", time_spoken)
+            transcript[0] = (f"{text}\n\n", time_spoken)
 
-    def get_transcript(self):
+    def get_transcript(self, max_phrases=MAX_PHRASES):
         combined_transcript = list(merge(
-            self.transcript_data["You"], self.transcript_data["Speaker"], 
+            self.transcript_data["You"], 
             key=lambda x: x[1], reverse=True))
-        combined_transcript = combined_transcript[:MAX_PHRASES]
+        combined_transcript = combined_transcript[:max_phrases]
         return "".join([t[0] for t in combined_transcript])
     
     def clear_transcript_data(self):
         self.transcript_data["You"].clear()
-        self.transcript_data["Speaker"].clear()
+        # self.transcript_data["Speaker"].clear()
 
         self.audio_sources["You"]["last_sample"] = bytes()
-        self.audio_sources["Speaker"]["last_sample"] = bytes()
+        # self.audio_sources["Speaker"]["last_sample"] = bytes()
 
         self.audio_sources["You"]["new_phrase"] = True
-        self.audio_sources["Speaker"]["new_phrase"] = True
+        # self.audio_sources["Speaker"]["new_phrase"] = True

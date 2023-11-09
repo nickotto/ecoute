@@ -51,29 +51,29 @@ def create_ui_components(root):
 
     font_size = 20
 
-    transcript_textbox = ctk.CTkTextbox(root, width=300, font=("Arial", font_size), text_color='#FFFCF2', wrap="word")
-    transcript_textbox.grid(row=0, column=0, padx=10, pady=20, sticky="nsew")
+    # transcript_textbox = ctk.CTkTextbox(root, width=300, font=("Arial", font_size), text_color='#FFFCF2', wrap="word")
+    # transcript_textbox.grid(row=0, column=0, padx=10, pady=20, sticky="nsew")
 
     response_textbox = ctk.CTkTextbox(root, width=300, font=("Arial", font_size), text_color='#639cdc', wrap="word")
-    response_textbox.grid(row=0, column=1, padx=10, pady=20, sticky="nsew")
+    response_textbox.grid(row=0, column=0, padx=10, pady=20, sticky="nsew")
 
     summarization_textbox = ctk.CTkTextbox(root, width=600, font=("Arial", font_size), text_color='#639cdc', wrap="word")
-    summarization_textbox.grid(row=0, column=2, padx=10, pady=20, sticky="nsew")
+    summarization_textbox.grid(row=0, column=1, padx=10, pady=20, sticky="nsew")
 
     freeze_button = ctk.CTkButton(root, text="Freeze", command=None)
-    freeze_button.grid(row=1, column=1, padx=10, pady=3, sticky="nsew")
+    freeze_button.grid(row=1, column=0, padx=10, pady=3, sticky="nsew")
 
     save_transcript_button = ctk.CTkButton(root, text="Save All", command=None)
-    save_transcript_button.grid(row=1, column=2, padx=10, pady=3, sticky="nsew")
+    save_transcript_button.grid(row=1, column=1, padx=10, pady=3, sticky="nsew")
 
     update_interval_slider_label = ctk.CTkLabel(root, text=f"", font=("Arial", 12), text_color="#FFFCF2")
-    update_interval_slider_label.grid(row=2, column=1, padx=10, pady=3, sticky="nsew")
+    update_interval_slider_label.grid(row=2, column=0, padx=10, pady=3, sticky="nsew")
 
     update_interval_slider = ctk.CTkSlider(root, from_=1, to=120, width=300, height=20, number_of_steps=9)
     update_interval_slider.set(30)
-    update_interval_slider.grid(row=3, column=1, padx=10, pady=10, sticky="nsew")
+    update_interval_slider.grid(row=3, column=0, padx=10, pady=10, sticky="nsew")
 
-    return transcript_textbox, response_textbox, summarization_textbox, update_interval_slider, update_interval_slider_label, freeze_button, save_transcript_button
+    return response_textbox, summarization_textbox, update_interval_slider, update_interval_slider_label, freeze_button, save_transcript_button
 
 def main():
     try:
@@ -83,7 +83,7 @@ def main():
         return
 
     root = ctk.CTk()
-    transcript_textbox, response_textbox, summarization_textbox, update_interval_slider, update_interval_slider_label, freeze_button, save_transcript_button = create_ui_components(root)
+    response_textbox, summarization_textbox, update_interval_slider, update_interval_slider_label, freeze_button, save_transcript_button = create_ui_components(root)
 
     audio_queue = queue.Queue()
 
@@ -143,7 +143,8 @@ def main():
 
     update_interval_slider_label.configure(text=f"Update interval: {update_interval_slider.get()} seconds")
 
-    update_transcript_UI(transcriber, transcript_textbox)
+    # update_transcript_UI(transcriber, transcript_textbox)
+    print(transcriber.get_transcript())
     update_response_UI(responder1,responder2, response_textbox, summarization_textbox,update_interval_slider_label, update_interval_slider, freeze_state)
  
     root.mainloop()
